@@ -269,6 +269,13 @@ namespace MobiFlight.UI
                 }
                 Process.Start(message.Url);
             });
+
+            MessageExchange.Instance.Subscribe<CommandControllerBindingsUpdate>((message) =>
+            {
+                ControllerBindingService.UpdateControllerBindings(execManager.Project, message.Bindings);
+                MessageExchange.Instance.Publish(execManager.Project);
+                ProjectOrConfigFileHasChanged();
+            });
         }
 
         private void OpenOutputConfigWizardForId(string guid)
@@ -631,7 +638,7 @@ namespace MobiFlight.UI
 
             if (execManager == null) return;
 
-            MessageExchange.Instance.Publish(new MobiFlight.BrowserMessages.Outgoing.BoardDefinitions() { Definitions = BoardDefinitions.Boards });
+            MessageExchange.Instance.Publish(new BrowserMessages.Outgoing.BoardDefinitions() { Definitions = BoardDefinitions.Boards });
             MessageExchange.Instance.Publish(new JoystickDefinitions() { Definitions = execManager.GetJoystickManager().Definitions });
             MessageExchange.Instance.Publish(new MidiControllerDefinitions() { Definitions = execManager.GetMidiBoardManager().Definitions.Values.ToList() });
         }
@@ -697,7 +704,14 @@ namespace MobiFlight.UI
                     return;
                 }
 
-                ShowSettingsDialog("peripheralsTabPage", null, null, null);
+                if (sender is string)
+                {
+                    ShowSettingsDialog(sender as string, null, null, null);
+                    return;
+                }
+
+                // open the settings dialog without pre-selecting anything.
+                ShowSettingsDialog(null, null, null, null);
             }, null);
         }
 
@@ -1229,7 +1243,8 @@ namespace MobiFlight.UI
         void execManager_OnTestModeException(object sender, EventArgs e)
         {
             StopExecution();
-            _showError((sender as Exception).Message);
+            var errorMessage = (sender as Exception)?.Message ?? "An error occurred during test mode";
+            ShowNotification("TestModeException", new Dictionary<string, string>() { { "ErrorMessage", errorMessage } }, errorMessage);
         }
 
         void Default_SettingChanging(object sender, System.Configuration.SettingChangingEventArgs e)
@@ -1652,28 +1667,29 @@ namespace MobiFlight.UI
 
             if (!execManager.SimAvailable())
             {
-                _showError(i18n._tr("uiMessageFsHasBeenStopped"));
+                ShowNotification("SimStopped", null, i18n._tr("uiMessageFsHasBeenStopped"));
                 UpdateAllConnectionIcons();
                 return;
             }
 
             if (sender.GetType() == typeof(SimConnectCache))
             {
-                _showError(i18n._tr("uiMessageSimConnectConnectionLost"));
+                ShowConnectionLost("SimConnect", i18n._tr("uiMessageSimConnectConnectionLost"));
                 UpdateSimConnectStatusIcon();
             }
             else if (sender.GetType() == typeof(XplaneCache))
             {
-                _showError(i18n._tr("uiMessageXplaneConnectionLost"));
+                ShowConnectionLost("X-Plane", i18n._tr("uiMessageXplaneConnectionLost"));
                 UpdateXplaneDirectConnectStatusIcon();
             }
             else if (sender is ProSim.ProSimCacheInterface)
             {
+                ShowConnectionLost("ProSim", i18n._tr("uiMessageProSimConnectionLost"));
                 UpdateProSimStatusIcon();
             }
             else
             {
-                _showError(i18n._tr("uiMessageFsuipcConnectionLost"));
+                ShowConnectionLost("FSUIPC", i18n._tr("uiMessageFsuipcConnectionLost"));
                 if (execManager.GetSimConnectCache().IsConnected())
                     UpdateFsuipcStatusIcon();
             }
@@ -1837,6 +1853,34 @@ namespace MobiFlight.UI
                 notifyIcon.ShowBalloonTip(1000, i18n._tr("Hint"), msg, ToolTipIcon.Warning);
             }
         } //_showError()
+
+        /// <summary>
+        /// Shows connection lost notification using toast or balloon tip depending on window state
+        /// </summary>
+        private void ShowConnectionLost(string simType, string fallbackMessage)
+        {
+            ShowNotification("SimConnectionLost", new Dictionary<string, string>() { { "SimType", simType } }, fallbackMessage);
+        } //ShowConnectionLost()
+
+        /// <summary>
+        /// Shows a notification using toast or balloon tip depending on window state
+        /// </summary>
+        private void ShowNotification(string eventName, Dictionary<string, string> context, string fallbackMessage)
+        {
+            if (this.WindowState == FormWindowState.Minimized)
+            {
+                // When minimized, use the existing _showError method which handles balloon notifications
+                _showError(fallbackMessage);
+                return;
+            }
+
+            // Show toast notification when not minimized
+            MessageExchange.Instance.Publish(new Notification()
+            {
+                Event = eventName,
+                Context = context
+            });
+        } //ShowNotification()
 
         /// <summary>
         /// handles the resize event
@@ -2138,6 +2182,9 @@ namespace MobiFlight.UI
                     if (opd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                     {
                         ProjectHasUnsavedChanges = opd.HasChanged();
+
+                        if (!ProjectHasUnsavedChanges) return;
+
                         var udpatedConfigs = opd.GetUpdatedConfigs();
 
                         for (int i = 0; i < execManager.Project.ConfigFiles.Count; i++)
@@ -2145,7 +2192,8 @@ namespace MobiFlight.UI
                             execManager.Project.ConfigFiles[i].ConfigItems = udpatedConfigs[i];
                         }
 
-                        MessageExchange.Instance.Publish(execManager.Project);
+                        ControllerBindingService.PerformAutoBinding(execManager.Project);
+                        saveToolStripButton_Click(this, new EventArgs());
                     }
                 }
                 else

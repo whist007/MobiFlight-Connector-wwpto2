@@ -164,8 +164,9 @@
     <Reference Include="NCalc">
       <HintPath>lib\NCalc.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
       <HintPath>packages\Newtonsoft.Json.13.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json.Schema, Version=4.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
       <HintPath>packages\Newtonsoft.Json.Schema.4.0.1\lib\net45\Newtonsoft.Json.Schema.dll</HintPath>
@@ -192,8 +193,8 @@
       <HintPath>packages\System.Buffers.4.6.1\lib\net462\System.Buffers.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.CodeDom, Version=10.0.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
-      <HintPath>packages\System.CodeDom.10.0.1\lib\net462\System.CodeDom.dll</HintPath>
+    <Reference Include="System.CodeDom, Version=10.0.0.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
+      <HintPath>packages\System.CodeDom.10.0.2\lib\net462\System.CodeDom.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Collections.Immutable, Version=10.0.0.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
@@ -276,6 +277,9 @@
     <Content Include="Scripts\Winwing\zibo_737_800x.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Scripts\Winwing\microsoft_aircraft_ec135.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Base\AutoUpdateChecker.cs" />
@@ -289,6 +293,7 @@
     <Compile Include="Base\ConfigRef.cs" />
     <Compile Include="Base\ConfigRefList.cs" />
     <Compile Include="Base\ConfigItemStatus.cs" />
+    <Compile Include="Base\Controller.cs" />
     <Compile Include="Base\DPIUtil.cs" />
     <Compile Include="Base\Extensions.cs" />
     <Compile Include="Base\FullCacheInterface.cs" />
@@ -324,6 +329,7 @@
     <Compile Include="MobiFlight\BrowserMessages\Incoming\CommandAddConfigFile.cs" />
     <Compile Include="MobiFlight\BrowserMessages\Incoming\CommandAddConfigItem.cs" />
     <Compile Include="MobiFlight\BrowserMessages\Incoming\CommandConfigBulkAction.cs" />
+    <Compile Include="MobiFlight\BrowserMessages\Incoming\CommandControllerBindingsUpdate.cs" />
     <Compile Include="MobiFlight\BrowserMessages\Incoming\CommandProjectToolbar.cs" />
     <Compile Include="MobiFlight\BrowserMessages\Incoming\CommandMainMenu.cs" />
     <Compile Include="MobiFlight\BrowserMessages\Incoming\CommandFileContexMenu.cs" />
@@ -339,6 +345,7 @@
     <Compile Include="MobiFlight\BrowserMessages\Incoming\Handler\CommandMainMenuHandler.cs" />
     <Compile Include="MobiFlight\BrowserMessages\Message.cs" />
     <Compile Include="MobiFlight\BrowserMessages\MessageExchange.cs" />
+    <Compile Include="MobiFlight\BrowserMessages\Outgoing\ConnectedControllers.cs" />
     <Compile Include="MobiFlight\BrowserMessages\Outgoing\RecentProjects.cs" />
     <Compile Include="MobiFlight\BrowserMessages\Outgoing\ConfigValuePartialUpdate.cs" />
     <Compile Include="MobiFlight\BrowserMessages\Outgoing\ConfigValueFullUpdate.cs" />
